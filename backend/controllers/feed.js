@@ -22,9 +22,12 @@ exports.createPost = (req, res, next) => {
 		message: 'Post created successfully!',
 
 		post: {
-			id: Date.now(),
+			_id: Date.now(),
 			title: title,
 			content: content,
+			imageUrl: 'images/image.jpg',
+			creator: {name: 'Roman'},
+			createdAt: new Date(),
 		},
 	});
 };
