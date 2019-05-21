@@ -2,6 +2,8 @@ if (process.env.NODE_ENV !== 'production') {
 	require('dotenv').config();
 }
 
+const path = require('path');
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -15,6 +17,7 @@ const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${
 const app = express();
 
 app.use(bodyParser.json());
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use((req, res, next) => {
 	res.setHeader('Access-Control-Allow-Origin', '*');
@@ -33,6 +36,14 @@ app.use((req, res, next) => {
 });
 
 app.use('/feed', feedRoutes);
+
+// register error handling middleware
+app.use((error, req, res, next) => {
+	console.error(error);
+	const message = error.message;
+	const status = error.statusCode || 500;
+	res.status(status).json({message: message});
+});
 
 mongoose
 	.connect(MONGODB_URI, {useNewUrlParser: true})

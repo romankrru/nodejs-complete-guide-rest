@@ -135,6 +135,7 @@ const Feed = props => {
 					state.posts.map(post => (
 						<Post
 							key={post._id}
+							imageUrl={post.imageUrl}
 							authorName={post.creator.name}
 							title={post.title}
 							createdAt={post.createdAt}
