@@ -1,53 +1,73 @@
-import React, {useState, Fragment} from 'react';
+import React from 'react';
 import {Button, Modal, Form} from 'semantic-ui-react';
 
-const ModalModalExample = props => {
-	const [isOpen, setIsOpen] = useState(false);
-	const [formState, setFormState] = useState({title: '', content: ''});
+import {Formik} from 'formik';
 
-	const handleChange = (_e, {name, value}) =>
-		setFormState({
-			...formState,
-			[name]: value,
-		});
+import SemanticField from '../../generic/SemanticField';
 
-	return (
-		<Fragment>
-			<Button onClick={() => setIsOpen(true)}>New Post</Button>
+const validate = values => {
+	const errors = {};
 
-			<Modal centered={false} open={isOpen}>
-				<Modal.Header>Create a post</Modal.Header>
-				<Modal.Content>
-					<Form onSubmit={() => props.onSubmit(formState)}>
+	if (!values.title) {
+		errors.title = 'Title is required';
+	}
+
+	if (values.title && values.title.length < 5) {
+		errors.title = 'Title should have min length of 5';
+	}
+
+	if (!values.content) {
+		errors.content = 'Content is required';
+	}
+
+	if (values.content && values.content.length < 5) {
+		errors.content = 'Content should have min length of 5';
+	}
+
+	return errors;
+};
+
+const ModalModalExample = props => (
+	<Modal centered={false} open={props.isOpen}>
+		<Modal.Header>Create a post</Modal.Header>
+		<Modal.Content>
+			<Formik
+				validateOnBlur
+				validate={validate}
+				initialValues={{title: ''}}
+				onSubmit={props.onSubmit}
+				render={formikProps => (
+					<Form onSubmit={formikProps.handleSubmit}>
 						<Form.Field>
 							<label>Title</label>
 
-							<Form.Input
-								placeholder="Title"
+							<SemanticField
+								placeholder="Post title"
+								Component={Form.Input}
 								name="title"
-								onChange={handleChange}
-								value={formState.title}
 							/>
 						</Form.Field>
 
-						<Form.TextArea
-							label="Content"
-							placeholder="Post content"
-							name="content"
-							onChange={handleChange}
-							value={formState.content}
-						/>
+						<Form.Field>
+							<label>Content</label>
 
-						<Button type="button" onClick={() => setIsOpen(false)}>
+							<SemanticField
+								placeholder="Post Content"
+								Component={Form.TextArea}
+								name="content"
+							/>
+						</Form.Field>
+
+						<Button type="button" onClick={props.close}>
 							Cancel
 						</Button>
 
 						<Button type="submit">Submit</Button>
 					</Form>
-				</Modal.Content>
-			</Modal>
-		</Fragment>
-	);
-};
+				)}
+			/>
+		</Modal.Content>
+	</Modal>
+);
 
 export default ModalModalExample;
