@@ -1,9 +1,8 @@
-import React, {useReducer, useEffect} from 'react';
+import React, {useReducer, useEffect, Fragment} from 'react';
 import {Item, Dimmer, Loader, Button} from 'semantic-ui-react';
 
-import Post from './Post';
+import PostItem from './PostItem';
 import Edit from './Edit';
-import Layout from '../generic/Layout';
 import ErrorModal from '../generic/ErrorModal';
 
 const actionTypes = {
@@ -48,10 +47,10 @@ const Feed = props => {
 		fetch(`${process.env.REACT_APP_API_URL}/feed/posts`)
 			.then(res => res.json())
 
-			.then(data =>
+			.then(posts =>
 				dispatch({
 					type: actionTypes.SET_POSTS,
-					posts: data.posts,
+					posts: posts,
 				}),
 			)
 
@@ -100,7 +99,7 @@ const Feed = props => {
 	};
 
 	return (
-		<Layout>
+		<Fragment>
 			<Button
 				onClick={() =>
 					dispatch({type: actionTypes.OPEN_CREATE_POST_MODAL})
@@ -133,19 +132,20 @@ const Feed = props => {
 					</Dimmer>
 				) : (
 					state.posts.map(post => (
-						<Post
+						<PostItem
 							key={post._id}
+							id={post._id}
 							imageUrl={post.imageUrl}
 							authorName={post.creator.name}
 							title={post.title}
 							createdAt={post.createdAt}
 						>
 							{post.content}
-						</Post>
+						</PostItem>
 					))
 				)}
 			</Item.Group>
-		</Layout>
+		</Fragment>
 	);
 };
 
