@@ -1,9 +1,9 @@
-import React from 'react';
-import {Button, Modal, Form} from 'semantic-ui-react';
-
+import React, {useState, useRef, useEffect} from 'react';
+import {Button, Modal, Form, Image} from 'semantic-ui-react';
 import {Formik} from 'formik';
 
 import SemanticField from '../../generic/SemanticField';
+import styles from './styles.module.css';
 
 const validate = values => {
 	const errors = {};
@@ -24,50 +24,122 @@ const validate = values => {
 		errors.content = 'Content should have min length of 5';
 	}
 
+	if (!values.image) {
+		errors.image = 'Image is required';
+	}
+
 	return errors;
 };
 
-const ModalModalExample = props => (
-	<Modal centered={false} open={props.isOpen}>
-		<Modal.Header>Create a post</Modal.Header>
-		<Modal.Content>
-			<Formik
-				validateOnBlur
-				validate={validate}
-				initialValues={{title: ''}}
-				onSubmit={props.onSubmit}
-				render={formikProps => (
-					<Form onSubmit={formikProps.handleSubmit}>
-						<Form.Field>
-							<label>Title</label>
+const initialFormValues = {title: '', content: '', image: null};
 
-							<SemanticField
-								placeholder="Post title"
-								Component={Form.Input}
-								name="title"
-							/>
-						</Form.Field>
+const ModalModalExample = props => {
+	const [file, setFile] = useState(null);
+	const [filePreview, setFilePreview] = useState(null);
+	const fileFieldRef = useRef();
 
-						<Form.Field>
-							<label>Content</label>
+	// reset image on modal close
+	useEffect(() => {
+		if (!props.isOpen) setFile(null);
+	}, [props.isOpen]);
 
-							<SemanticField
-								placeholder="Post Content"
-								Component={Form.TextArea}
-								name="content"
-							/>
-						</Form.Field>
+	// create image preview
+	useEffect(() => {
+		if (!file) {
+			setFilePreview(null);
+		} else {
+			const reader = new FileReader();
+			reader.readAsDataURL(file);
+			reader.onload = e => setFilePreview(e.target.result);
+		}
+	}, [file]);
 
-						<Button type="button" onClick={props.close}>
-							Cancel
-						</Button>
+	const openFilePicker = () => fileFieldRef.current.click();
 
-						<Button type="submit">Submit</Button>
-					</Form>
-				)}
-			/>
-		</Modal.Content>
-	</Modal>
-);
+	const onFileInputChange = (e, formikProps) => {
+		const file = e.currentTarget.files[0];
+		formikProps.setFieldValue('image', file);
+		setFile(file);
+	};
+
+	return (
+		<Modal centered={false} open={props.isOpen}>
+			<Modal.Header>Create a post</Modal.Header>
+			<Modal.Content>
+				<Formik
+					validateOnBlur
+					validate={validate}
+					initialValues={initialFormValues}
+					onSubmit={props.onSubmit}
+					render={formikProps => (
+						<Form onSubmit={formikProps.handleSubmit}>
+							<Form.Field>
+								<label>Title</label>
+
+								<SemanticField
+									placeholder="Post title"
+									Component={Form.Input}
+									name="title"
+								/>
+							</Form.Field>
+
+							<Form.Field>
+								<label>Image</label>
+
+								<Button
+									color={
+										formikProps.errors.image &&
+										formikProps.touched.image
+											? 'red'
+											: undefined
+									}
+									onClick={openFilePicker}
+									type="button"
+								>
+									Pick an image
+								</Button>
+
+								{file && <span>{file.name}</span>}
+
+								<div>
+									<Image
+										className={styles.imageWrapper}
+										src={filePreview}
+										size="small"
+									/>
+								</div>
+
+								<input
+									onChange={e =>
+										onFileInputChange(e, formikProps)
+									}
+									type="file"
+									ref={fileFieldRef}
+									hidden
+								/>
+							</Form.Field>
+
+							<Form.Field>
+								<label>Content</label>
+
+								<SemanticField
+									placeholder="Post Content"
+									Component={Form.TextArea}
+									name="content"
+								/>
+							</Form.Field>
+
+							<Button type="button" onClick={props.close}>
+								Cancel
+							</Button>
+
+							<Button type="submit">Submit</Button>
+						</Form>
+					)}
+				/>
+			</Modal.Content>
+		</Modal>
+	);
+};
 
 export default ModalModalExample;

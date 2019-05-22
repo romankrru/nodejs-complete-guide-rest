@@ -70,11 +70,19 @@ const Post = props => {
 		<Segment>
 			<h2>{state.post.title}</h2>
 			<Divider />
+
+			<i>
+				<span>Author: {state.post.creator.name}</span>
+				<br />
+				<span>Date: {state.post.createdAt}</span>
+			</i>
+
 			<Image
 				src={`${process.env.REACT_APP_API_URL}/${state.post.imageUrl}`}
 				size="medium"
 				centered
 			/>
+
 			<p>{state.post.content}</p>
 		</Segment>
 	);

@@ -65,12 +65,17 @@ const Feed = props => {
 	}, []);
 
 	const submit = postData => {
+		const formData = new FormData();
+
+		Object.keys(postData).forEach(key => {
+			formData.append(key, postData[key]);
+		});
+
 		dispatch({type: actionTypes.SET_ERROR, error: null});
 
 		fetch(`${process.env.REACT_APP_API_URL}/feed/post`, {
 			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify(postData),
+			body: formData,
 		})
 			.then(res => {
 				if (![200, 201].includes(res.status))
