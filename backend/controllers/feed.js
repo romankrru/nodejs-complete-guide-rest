@@ -140,3 +140,27 @@ exports.updatePost = (req, res, next) => {
 
 		.catch(next);
 };
+
+exports.deletePost = (req, res, next) => {
+	const postId = req.params.postId;
+
+	Post.findById(postId)
+		.then(post => {
+			if (!post) {
+				const err = new Error('Could not find post');
+				err.statusCode = 404;
+				throw err;
+			}
+
+			// check for logged in user
+
+			clearImage(post.imageUrl);
+			return Post.findByIdAndRemove(postId);
+		})
+
+		.then(() => {
+			res.status(200).json({message: 'Post deleted'});
+		})
+
+		.catch(next);
+};

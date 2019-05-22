@@ -138,6 +138,38 @@ const Feed = props => {
 			});
 	};
 
+	const deletePost = postId => {
+		dispatch({type: actionTypes.SET_LOADING, loading: true});
+		dispatch({type: actionTypes.SET_ERROR, error: null});
+
+		fetch(`${process.env.REACT_APP_API_URL}/feed/post/${postId}`, {
+			method: 'DELETE',
+		})
+			.then(res => {
+				if (res.status !== 200) {
+					throw new Error('Error while deleting post!');
+				}
+
+				return res.json();
+			})
+
+			.then(() =>
+				dispatch({
+					type: actionTypes.SET_POSTS,
+					posts: state.posts.filter(post => post._id !== postId),
+				}),
+			)
+
+			.catch(err => {
+				console.error(err);
+				dispatch({type: actionTypes.SET_ERROR, error: err});
+			})
+
+			.finally(() =>
+				dispatch({type: actionTypes.SET_LOADING, loading: false}),
+			);
+	};
+
 	const openEditModal = data =>
 		dispatch({type: actionTypes.OPEN_EDIT_POST_MODAL, data: data});
 
@@ -183,6 +215,7 @@ const Feed = props => {
 							id={post._id}
 							imageUrl={post.imageUrl}
 							edit={openEditModal}
+							delete={deletePost}
 							authorName={post.creator.name}
 							title={post.title}
 							createdAt={post.createdAt}

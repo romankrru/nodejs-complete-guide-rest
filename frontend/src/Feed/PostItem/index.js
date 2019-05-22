@@ -39,7 +39,10 @@ const PostItem = props => (
 					>
 						Edit
 					</Button>
-					<Button color="red">Delete</Button>
+
+					<Button color="red" onClick={() => props.delete(props.id)}>
+						Delete
+					</Button>
 				</div>
 			</Item.Description>
 		</Item.Content>
