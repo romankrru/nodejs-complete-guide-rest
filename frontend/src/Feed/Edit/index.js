@@ -24,7 +24,7 @@ const validate = values => {
 		errors.content = 'Content should have min length of 5';
 	}
 
-	if (!values.image) {
+	if (!values.image && !values.imageUrl) {
 		errors.image = 'Image is required';
 	}
 
@@ -62,14 +62,22 @@ const ModalModalExample = props => {
 		setFile(file);
 	};
 
+	const previewSrc =
+		filePreview ||
+		(props.data &&
+			`${process.env.REACT_APP_API_URL}/${props.data.imageUrl}`);
+
 	return (
 		<Modal centered={false} open={props.isOpen}>
-			<Modal.Header>Create a post</Modal.Header>
+			<Modal.Header>
+				{props.data ? 'Edit post' : 'Create a post'}
+			</Modal.Header>
+
 			<Modal.Content>
 				<Formik
 					validateOnBlur
 					validate={validate}
-					initialValues={initialFormValues}
+					initialValues={props.data || initialFormValues}
 					onSubmit={props.onSubmit}
 					render={formikProps => (
 						<Form onSubmit={formikProps.handleSubmit}>
@@ -104,7 +112,7 @@ const ModalModalExample = props => {
 								<div>
 									<Image
 										className={styles.imageWrapper}
-										src={filePreview}
+										src={previewSrc}
 										size="small"
 									/>
 								</div>
@@ -133,7 +141,15 @@ const ModalModalExample = props => {
 								Cancel
 							</Button>
 
-							<Button type="submit">Submit</Button>
+							<Button
+								type="submit"
+								disabled={
+									!formikProps.isValid ||
+									formikProps.isSubmitting
+								}
+							>
+								Submit
+							</Button>
 						</Form>
 					)}
 				/>

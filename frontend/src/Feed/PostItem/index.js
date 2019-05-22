@@ -20,14 +20,25 @@ const PostItem = props => (
 			</Item.Meta>
 
 			<Item.Description>
-				{props.children}
+				{props.content}
 
 				<div className={styles.controls}>
 					<Button onClick={() => navigate(`/${props.id}`)}>
 						View
 					</Button>
 
-					<Button>Edit</Button>
+					<Button
+						onClick={() =>
+							props.edit({
+								id: props.id,
+								title: props.title,
+								content: props.content,
+								imageUrl: props.imageUrl,
+							})
+						}
+					>
+						Edit
+					</Button>
 					<Button color="red">Delete</Button>
 				</div>
 			</Item.Description>
