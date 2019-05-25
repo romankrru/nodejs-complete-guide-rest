@@ -11,6 +11,7 @@ const multer = require('multer');
 const uuidv4 = require('uuid/v4');
 
 const feedRoutes = require('./routes/feed');
+const authRoutes = require('./routes/auth');
 
 const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${
 	process.env.MONGO_PASSWORD
@@ -59,6 +60,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/feed', feedRoutes);
+app.use('/auth', authRoutes);
 
 // register error handling middleware
 app.use((error, req, res, next) => {
