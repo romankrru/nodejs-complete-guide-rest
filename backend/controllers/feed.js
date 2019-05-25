@@ -14,11 +14,29 @@ const clearImage = imagePath => {
 };
 
 exports.getPosts = (req, res, next) => {
+	const currentPage = req.query.page || 1;
+	const perPage = 2;
+	let totalCount;
+
 	Post.find()
-		.sort({createdAt: -1})
+		.countDocuments()
+
+		.then(count => {
+			totalCount = count;
+
+			return Post.find()
+				.sort({createdAt: -1})
+				.skip((currentPage - 1) * perPage)
+				.limit(perPage);
+		})
 
 		.then(posts => {
-			res.status(200).json(posts);
+			res.status(200).json({
+				posts: posts,
+				message: 'Posts fetched.',
+				totalCount: totalCount,
+				totalPages: Math.ceil(totalCount / perPage),
+			});
 		})
 
 		.catch(next);

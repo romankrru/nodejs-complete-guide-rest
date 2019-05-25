@@ -92,7 +92,7 @@ const ModalModalExample = props => {
 							</Form.Field>
 
 							<Form.Field>
-								<label>Image</label>
+								<label>Image*</label>
 
 								<Button
 									color={

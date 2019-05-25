@@ -1,220 +1,92 @@
-import React, {useReducer, useEffect, Fragment} from 'react';
+import React, {useState, useEffect, useCallback, Fragment} from 'react';
+
 import {Item, Dimmer, Loader, Button} from 'semantic-ui-react';
+import {useSelector, useDispatch} from 'react-redux';
 
 import PostItem from './PostItem';
 import Edit from './Edit';
 import ErrorModal from '../generic/ErrorModal';
+import Pagination from './Pagination';
 
-const actionTypes = {
-	SET_POSTS: 'SET_POSTS',
-	SET_LOADING: 'SET_LOADING',
-	CLOSE_POST_MODAL: 'CLOSE_POST_MODAL',
-	OPEN_CREATE_POST_MODAL: 'OPEN_CREATE_POST_MODAL',
-	OPEN_EDIT_POST_MODAL: 'OPEN_EDIT_POST_MODAL',
-	SET_ERROR: 'SET_ERROR',
-};
-
-const savePost = ({data, isEdit}) => {
-	const formData = new FormData();
-
-	formData.append('title', data.title);
-	formData.append('content', data.content);
-	formData.append('image', data.image);
-	formData.append('imageUrl', data.imageUrl);
-
-	const url = isEdit
-		? `${process.env.REACT_APP_API_URL}/feed/post/${data.id}`
-		: `${process.env.REACT_APP_API_URL}/feed/post`;
-
-	return fetch(url, {
-		method: isEdit ? 'PUT' : 'POST',
-		body: formData,
-	}).then(res => {
-		if (![200, 201].includes(res.status))
-			throw new Error(
-				'Error while creating or updating post! Please try again.',
-			);
-
-		return res.json();
-	});
-};
-
-const reducer = (state, action) => {
-	switch (action.type) {
-		case actionTypes.SET_POSTS:
-			return {...state, posts: action.posts};
-
-		case actionTypes.SET_LOADING:
-			return {...state, loading: action.loading};
-
-		case actionTypes.OPEN_CREATE_POST_MODAL:
-			return {...state, isCreatePostModalOpen: true};
-
-		case actionTypes.CLOSE_POST_MODAL:
-			return {
-				...state,
-				isCreatePostModalOpen: false,
-				isEditPostModalOpen: false,
-				editPostModalData: null,
-			};
-
-		case actionTypes.OPEN_EDIT_POST_MODAL:
-			return {
-				...state,
-				isEditPostModalOpen: true,
-				editPostModalData: action.data,
-			};
-
-		case actionTypes.SET_ERROR:
-			return {...state, error: action.error};
-
-		default:
-			return state;
-	}
-};
+import * as actions from './actions';
+export {default as reducer} from './reducer';
 
 const Feed = props => {
-	const [state, dispatch] = useReducer(reducer, {
-		error: null,
-		posts: [],
-		loading: true,
-		isCreatePostModalOpen: false,
-		isEditPostModalOpen: false,
-		editPostModalData: null,
-	});
+	const [activePage, setActivePage] = useState(1);
+	const dispatch = useDispatch();
+	const posts = useSelector(state => state.feed.posts);
+	const isEditingPost = useSelector(state => state.feed.isEditingPost);
+	const editPostData = useSelector(state => state.feed.editPostData);
+	const error = useSelector(state => state.feed.error);
+	const totalPages = useSelector(state => state.feed.totalPages);
+
+	const fetchPostsLoading = useSelector(
+		state => state.feed.fetchPostsLoading,
+	);
 
 	useEffect(() => {
-		fetch(`${process.env.REACT_APP_API_URL}/feed/posts`)
-			.then(res => res.json())
+		dispatch(actions.loadPosts(activePage));
+	}, [activePage, dispatch]);
 
-			.then(posts => {
-				dispatch({
-					type: actionTypes.SET_POSTS,
-					posts: posts,
-				});
-			})
+	const openEditPost = useCallback(
+		postData => dispatch(actions.startEditPost(postData)),
+		[dispatch],
+	);
 
-			.catch(err => console.error(err))
+	const closeEditPost = useCallback(() => dispatch(actions.stopEditPost()), [
+		dispatch,
+	]);
 
-			.finally(() =>
-				dispatch({
-					type: actionTypes.SET_LOADING,
-					loading: false,
+	const deletePost = useCallback(
+		postId =>
+			dispatch(actions.deletePost(postId)).then(() =>
+				dispatch(actions.loadPosts(activePage)),
+			),
+
+		[dispatch, activePage],
+	);
+
+	const closeError = useCallback(() => dispatch(actions.setError(null)), [
+		dispatch,
+	]);
+
+	const submit = useCallback(
+		postData =>
+			dispatch(
+				actions.savePost({
+					data: postData,
+					isEdit: Boolean(editPostData),
 				}),
-			);
-	}, []);
+			).then(() => dispatch(actions.loadPosts(activePage))),
 
-	const submit = (postData, formActions) => {
-		const isEdit = state.isEditPostModalOpen;
-
-		dispatch({type: actionTypes.SET_ERROR, error: null});
-
-		savePost({data: postData, isEdit: isEdit})
-			.then(data => {
-				const updatedPosts = isEdit
-					? state.posts.map(post => {
-							if (post._id === state.editPostModalData.id)
-								return data.post;
-
-							return post;
-					  })
-					: [data.post, ...state.posts];
-
-				dispatch({
-					type: actionTypes.SET_POSTS,
-					posts: updatedPosts,
-				});
-
-				dispatch({type: actionTypes.CLOSE_POST_MODAL});
-			})
-
-			.catch(err => {
-				console.error(err);
-				dispatch({type: actionTypes.SET_ERROR, error: err});
-			})
-
-			.finally(() => {
-				formActions.setSubmitting(false);
-			});
-	};
-
-	const deletePost = postId => {
-		dispatch({type: actionTypes.SET_LOADING, loading: true});
-		dispatch({type: actionTypes.SET_ERROR, error: null});
-
-		fetch(`${process.env.REACT_APP_API_URL}/feed/post/${postId}`, {
-			method: 'DELETE',
-		})
-			.then(res => {
-				if (res.status !== 200) {
-					throw new Error('Error while deleting post!');
-				}
-
-				return res.json();
-			})
-
-			.then(() =>
-				dispatch({
-					type: actionTypes.SET_POSTS,
-					posts: state.posts.filter(post => post._id !== postId),
-				}),
-			)
-
-			.catch(err => {
-				console.error(err);
-				dispatch({type: actionTypes.SET_ERROR, error: err});
-			})
-
-			.finally(() =>
-				dispatch({type: actionTypes.SET_LOADING, loading: false}),
-			);
-	};
-
-	const openEditModal = data =>
-		dispatch({type: actionTypes.OPEN_EDIT_POST_MODAL, data: data});
+		[dispatch, editPostData, activePage],
+	);
 
 	return (
 		<Fragment>
-			<Button
-				onClick={() =>
-					dispatch({type: actionTypes.OPEN_CREATE_POST_MODAL})
-				}
-			>
-				New Post
-			</Button>
+			<Button onClick={() => openEditPost(null)}>New Post</Button>
 
 			<Edit
 				onSubmit={submit}
-				data={state.editPostModalData}
-				isOpen={
-					state.isCreatePostModalOpen || state.isEditPostModalOpen
-				}
-				close={() =>
-					dispatch({
-						type: actionTypes.CLOSE_POST_MODAL,
-					})
-				}
+				data={editPostData}
+				isOpen={isEditingPost}
+				close={closeEditPost}
 			/>
 
-			<ErrorModal
-				error={state.error}
-				close={() =>
-					dispatch({type: actionTypes.SET_ERROR, error: null})
-				}
-			/>
+			<ErrorModal error={error} close={closeError} />
 
 			<Item.Group>
-				{state.loading ? (
+				{fetchPostsLoading ? (
 					<Dimmer active inverted>
 						<Loader inverted>Loading</Loader>
 					</Dimmer>
 				) : (
-					state.posts.map(post => (
+					posts.map(post => (
 						<PostItem
 							key={post._id}
 							id={post._id}
 							imageUrl={post.imageUrl}
-							edit={openEditModal}
+							edit={openEditPost}
 							delete={deletePost}
 							authorName={post.creator.name}
 							title={post.title}
@@ -224,6 +96,12 @@ const Feed = props => {
 					))
 				)}
 			</Item.Group>
+
+			<Pagination
+				totalPages={totalPages}
+				activePage={activePage}
+				setActivePage={setActivePage}
+			/>
 		</Fragment>
 	);
 };
