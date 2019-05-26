@@ -9,7 +9,9 @@ const Layout = props => (
 				Feed
 			</Menu.Item>
 
-			<Menu.Item>Logout</Menu.Item>
+			<Menu.Item as={Link} to="/auth/signup">
+				Sign Up
+			</Menu.Item>
 		</Menu>
 
 		<div>{props.children}</div>
