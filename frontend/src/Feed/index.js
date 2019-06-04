@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback, Fragment} from 'react';
 
 import {Item, Dimmer, Loader, Button} from 'semantic-ui-react';
-import {useSelector, useDispatch} from 'react-redux';
+import {useSelector, useDispatch, shallowEqual} from 'react-redux';
 
 import PostItem from './PostItem';
 import Edit from './Edit';
@@ -14,14 +14,18 @@ export {default as reducer} from './reducer';
 const Feed = props => {
 	const [activePage, setActivePage] = useState(1);
 	const dispatch = useDispatch();
-	const posts = useSelector(state => state.feed.posts);
-	const isEditingPost = useSelector(state => state.feed.isEditingPost);
-	const editPostData = useSelector(state => state.feed.editPostData);
-	const error = useSelector(state => state.feed.error);
-	const totalPages = useSelector(state => state.feed.totalPages);
 
-	const fetchPostsLoading = useSelector(
-		state => state.feed.fetchPostsLoading,
+	const state = useSelector(
+		state => ({
+			posts: state.feed.posts,
+			isEditingPost: state.feed.isEditingPost,
+			editPostData: state.feed.editPostData,
+			error: state.feed.error,
+			fetchPostsLoading: state.feed.fetchPostsLoading,
+			totalPages: state.feed.totalPages,
+		}),
+
+		shallowEqual,
 	);
 
 	useEffect(() => {
@@ -55,11 +59,11 @@ const Feed = props => {
 			dispatch(
 				actions.savePost({
 					data: postData,
-					isEdit: Boolean(editPostData),
+					isEdit: Boolean(state.editPostData),
 				}),
 			).then(() => dispatch(actions.loadPosts(activePage))),
 
-		[dispatch, editPostData, activePage],
+		[dispatch, state.editPostData, activePage],
 	);
 
 	return (
@@ -68,20 +72,20 @@ const Feed = props => {
 
 			<Edit
 				onSubmit={submit}
-				data={editPostData}
-				isOpen={isEditingPost}
+				data={state.editPostData}
+				isOpen={state.isEditingPost}
 				close={closeEditPost}
 			/>
 
-			<ErrorModal error={error} close={closeError} />
+			<ErrorModal error={state.error} close={closeError} />
 
 			<Item.Group>
-				{fetchPostsLoading ? (
+				{state.fetchPostsLoading ? (
 					<Dimmer active inverted>
 						<Loader inverted>Loading</Loader>
 					</Dimmer>
 				) : (
-					posts.map(post => (
+					state.posts.map(post => (
 						<PostItem
 							key={post._id}
 							id={post._id}
@@ -98,7 +102,7 @@ const Feed = props => {
 			</Item.Group>
 
 			<Pagination
-				totalPages={totalPages}
+				totalPages={state.totalPages}
 				activePage={activePage}
 				setActivePage={setActivePage}
 			/>

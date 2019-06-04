@@ -17,7 +17,7 @@ ReactDOM.render(
 			<Router>
 				<Feed path="/" />
 				<Post path="/:postId" />
-				<Auth path="/auth/signup" />
+				<Auth path="/auth/*" />
 			</Router>
 		</Layout>
 	</Provider>,

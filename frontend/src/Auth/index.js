@@ -1,88 +1,58 @@
 import React, {Fragment} from 'react';
-import {useSelector, useDispatch} from 'react-redux';
-import {Grid, Header, Segment, Form, Button} from 'semantic-ui-react';
-import {Formik} from 'formik';
+import {useSelector, useDispatch, shallowEqual} from 'react-redux';
+import {Grid} from 'semantic-ui-react';
+import {Router} from '@reach/router';
+import {compose} from 'redux';
 
-import SemanticField from '../generic/SemanticField';
 import ErrorModal from '../generic/ErrorModal';
-
+import SignIn from './SignIn';
+import SignUp from './SignUp';
 import * as actions from './actions';
 export {default as reducer} from './reducer';
 
-const validate = f => ({});
-
-const initialFormValues = {
-	email: '',
-	password: '',
-	name: '',
-};
-
 const Auth = props => {
-	const isSignUpLoading = useSelector(state => state.auth.isSignUpLoading);
-	const signUpError = useSelector(state => state.auth.signUpError);
+	const state = useSelector(
+		state => ({
+			error: state.auth.error,
+			isLoading: state.auth.isSignUpLoading || state.auth.isSignInLoading,
+		}),
+
+		shallowEqual,
+	);
+
 	const dispatch = useDispatch();
 
-	const submit = values => {
-		dispatch(actions.signUp(values));
-	};
+	const signUp = compose(
+		dispatch,
+		actions.signUp,
+	);
+
+	const signIn = compose(
+		dispatch,
+		actions.signIn,
+	);
+
+	const closeErrorModal = () => dispatch(actions.setError(null));
 
 	return (
 		<Fragment>
-			<ErrorModal error={signUpError} close={f => f} />
+			<ErrorModal error={state.error} close={closeErrorModal} />
 
 			<Grid centered columns={2}>
 				<Grid.Column>
-					<Segment>
-						<Header as="h3">Sign up</Header>
-
-						<Formik
-							validateOnBlur
-							validate={validate}
-							initialValues={initialFormValues}
-							onSubmit={submit}
-							render={formikProps => (
-								<Form onSubmit={formikProps.handleSubmit}>
-									<Form.Field>
-										<label>E-mail</label>
-
-										<SemanticField
-											placeholder="E-mail"
-											Component={Form.Input}
-											name="email"
-										/>
-									</Form.Field>
-
-									<Form.Field>
-										<label>Name</label>
-
-										<SemanticField
-											placeholder="Name"
-											Component={Form.Input}
-											name="name"
-										/>
-									</Form.Field>
-
-									<Form.Field>
-										<label>Password</label>
-
-										<SemanticField
-											placeholder="Password"
-											type="password"
-											Component={Form.Input}
-											name="password"
-										/>
-									</Form.Field>
-
-									<Button
-										loading={isSignUpLoading}
-										type="submit"
-									>
-										Sign Up
-									</Button>
-								</Form>
-							)}
+					<Router>
+						<SignIn
+							path="signin"
+							signIn={signIn}
+							isLoading={state.isLoading}
 						/>
-					</Segment>
+
+						<SignUp
+							path="signup"
+							signUp={signUp}
+							isLoading={state.isLoading}
+						/>
+					</Router>
 				</Grid.Column>
 			</Grid>
 		</Fragment>
